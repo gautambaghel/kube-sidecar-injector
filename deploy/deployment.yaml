@@ -21,7 +21,7 @@ spec:
           imagePullPolicy: Always
           args:
           - -service-name=sidecar-injector
-          - -sidecar-config-file=/etc/webhook/config/sidecarconfig.yaml
+          - -sidecar-config-file=/etc/webhook/config/sidecarconfig.json
           env:
           - name: POD_NAMESPACE
             valueFrom:

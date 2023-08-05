@@ -8,11 +8,10 @@ resources:
 - service.yaml
 - serviceaccount.yaml
 - configmap.yaml
-- nginx-configmap.yaml
 
 images:
 - name: sidecar-injector
-  newName: quay.io/morvencao/sidecar-injector
+  newName: docker.io/baghelg/sidecar-injector
   newTag: latest
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

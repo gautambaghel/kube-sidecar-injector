@@ -19,7 +19,7 @@ KUSTOMIZE_VERSION?=v3.5.4
 KUSTOMIZE_ARCHIVE_NAME?=kustomize_$(KUSTOMIZE_VERSION)_$(GOHOSTOS)_$(GOHOSTARCH).tar.gz
 kustomize_dir:=$(dir $(KUSTOMIZE))
 
-IMAGE = quay.io/morvencao/sidecar-injector:latest
+IMAGE = docker.io/baghelg/sidecar-injector:latest
 
 all: build
 .PHONY: all
@@ -80,10 +80,19 @@ deploy: kustomize
 undeploy: kustomize
 	$(KUSTOMIZE) build deploy | $(KUBECTL) delete --ignore-not-found -f -
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
+## Location to install dependencies to
+LOCALBIN ?= $(shell pwd)/bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
+
+## Tool Versions
+KUSTOMIZE_VERSION ?= v4.5.7
+KUSTOMIZE ?= $(LOCALBIN)/kustomize
+KUSTOMIZE_INSTALL_SCRIPT ?= "./hack/install_kustomize.sh"
 .PHONY: kustomize
-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
+$(KUSTOMIZE): $(LOCALBIN)
+	test -s $(LOCALBIN)/kustomize || $(KUSTOMIZE_INSTALL_SCRIPT) $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))

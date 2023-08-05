@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"gopkg.in/yaml.v2"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,8 +27,8 @@ var ignoredNamespaces = []string{
 }
 
 const (
-	admissionWebhookAnnotationInjectKey = "sidecar-injector-webhook.morven.me/inject"
-	admissionWebhookAnnotationStatusKey = "sidecar-injector-webhook.morven.me/status"
+	admissionWebhookAnnotationInjectKey = "sidecar-injector-webhook.apigee-proxy.me/inject"
+	admissionWebhookAnnotationStatusKey = "sidecar-injector-webhook.apigee-proxy.me/status"
 )
 
 type WebhookServer struct {
@@ -46,8 +45,8 @@ type WhSvrParameters struct {
 }
 
 type Config struct {
-	Containers []corev1.Container `yaml:"containers"`
-	Volumes    []corev1.Volume    `yaml:"volumes"`
+	Containers []corev1.Container `json:"containers"`
+	Volumes    []corev1.Volume    `json:"volumes"`
 }
 
 type patchOperation struct {
@@ -64,7 +63,7 @@ func loadConfig(configFile string) (*Config, error) {
 	infoLogger.Printf("New configuration: sha256sum %x", sha256.Sum256(data))
 
 	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
 

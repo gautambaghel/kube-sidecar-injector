@@ -189,7 +189,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 }
 ```
-From the code above, the `mutate` function calls [mutationRequired](https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/webhook.go#L98-L130) to detemine whether mutation is required or not. For those requiring mutation, the `mutate` function gets mutation 'patch' from another function [createPatch](https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/webhook.go#L196-L205). Pay attention to the little trick in function `mutationRequired`, we skip the `pods` without annotation `sidecar-injector-webhook.morven.me/inject: true`. That will be mentioned latter when we deployment applications. For complete code, please refer to https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/webhook.go.
+From the code above, the `mutate` function calls [mutationRequired](https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/webhook.go#L98-L130) to detemine whether mutation is required or not. For those requiring mutation, the `mutate` function gets mutation 'patch' from another function [createPatch](https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/webhook.go#L196-L205). Pay attention to the little trick in function `mutationRequired`, we skip the `pods` without annotation `sidecar-injector-webhook.apigee-proxy.me/inject: true`. That will be mentioned latter when we deployment applications. For complete code, please refer to https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/webhook.go.
 
 #### Create Dockerfile and Build the Container
 
@@ -197,10 +197,10 @@ Create the `build` script:
 ```
 dep ensure
 CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o kube-mutating-webhook-tutorial .
-docker build --no-cache -t morvencao/sidecar-injector:v1 .
+docker build --no-cache -t baghelg/sidecar-injector:v1 .
 rm -rf kube-mutating-webhook-tutorial
 
-docker push morvencao/sidecar-injector:v1
+docker push baghelg/sidecar-injector:v1
 ```
 
 And create `Dockerfile` as dependency of build script:
@@ -224,8 +224,8 @@ Step 3/3 : ENTRYPOINT ["./kube-mutating-webhook-tutorial"]
 Removing intermediate container da6e956d1755
  ---> 619faa936145
 Successfully built 619faa936145
-Successfully tagged morvencao/sidecar-injector:v1
-The push refers to repository [docker.io/morvencao/sidecar-injector]
+Successfully tagged baghelg/sidecar-injector:v1
+The push refers to repository [docker.io/baghelg/sidecar-injector]
 efd05fe119bb: Pushed
 cd7100a72410: Layer already exists
 v1: digest: sha256:7a4889928ec5a8bcfb91b610dab812e5228d8dfbd2b540cd7a341c11f24729bf size: 739
@@ -406,7 +406,7 @@ spec:
     spec:
       containers:
         - name: sidecar-injector
-          image: morvencao/sidecar-injector:v1
+          image: baghelg/sidecar-injector:v1
           imagePullPolicy: IfNotPresent
           args:
             - -sidecarCfgFile=/etc/webhook/config/sidecarconfig.yaml
@@ -473,7 +473,7 @@ metadata:
   labels:
     app: sidecar-injector
 webhooks:
-  - name: sidecar-injector.morven.me
+  - name: sidecar-injector.apigee-proxy.me
     clientConfig:
       service:
         name: sidecar-injector-webhook-svc
@@ -544,7 +544,7 @@ Typically we create and deploy a sleep application in `default` namespace to see
 >   template:
 >     metadata:
 >       annotations:
->         sidecar-injector-webhook.morven.me/inject: "true"
+>         sidecar-injector-webhook.apigee-proxy.me/inject: "true"
 >       labels:
 >         app: sleep
 >     spec:
@@ -559,7 +559,7 @@ deployment "sleep" created
 
 Pay close attention to the `spec.template.metadata.annotations` as there is a new annotation added:
 ```
-sidecar-injector-webhook.morven.me/inject: "true"
+sidecar-injector-webhook.apigee-proxy.me/inject: "true"
 ```
 The sidecar injector has some logic to check the existence of the above annotation before injecting sidecar container and volume. 
 You're free to delete the logic or customize it before build the sidecar injector container.
@@ -619,8 +619,8 @@ kind: Pod
 metadata:
   annotations:
     kubernetes.io/psp: default
-    sidecar-injector-webhook.morven.me/inject: "true"
-    sidecar-injector-webhook.morven.me/status: injected
+    sidecar-injector-webhook.apigee-proxy.me/inject: "true"
+    sidecar-injector-webhook.apigee-proxy.me/status: injected
   labels:
     app: sleep
     pod-template-hash: "2835848710"
@@ -668,9 +668,9 @@ But there is a problem for this, with the above configurations, all of the pods 
 
 #### Control sidecar injector with `annotation`
 
-Thanks to flexibility of `MutatingAdmissionWebhook`, we can easily customized the mutating logic to filter resources with specified annotations. Remember the annotation `sidecar-injector-webhook.morven.me/inject: "true"` mentioned above? It can be used as an extra control on sidecar injector. I have written [some code](https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/webhook.go#L98-L130) in webhook server to skip injecting for pod without the annotation.
+Thanks to flexibility of `MutatingAdmissionWebhook`, we can easily customized the mutating logic to filter resources with specified annotations. Remember the annotation `sidecar-injector-webhook.apigee-proxy.me/inject: "true"` mentioned above? It can be used as an extra control on sidecar injector. I have written [some code](https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/webhook.go#L98-L130) in webhook server to skip injecting for pod without the annotation.
 
-Let's give it a try. In this case, we create another sleep application without `sidecar-injector-webhook.morven.me/inject: "true"` annotation in `podTemplateSpec`:
+Let's give it a try. In this case, we create another sleep application without `sidecar-injector-webhook.apigee-proxy.me/inject: "true"` annotation in `podTemplateSpec`:
 ```
 [root@mstnode kube-mutating-webhook-tutorial]# kubectl delete deployment sleep
 deployment "sleep" deleted
@@ -710,7 +710,7 @@ sleep-776b7bcdcd-4bz58                                1/1       Running       0 
 The output shows that the sleep application contains only one container, no extra container and volume injected.
 Then we patch the sleep deployment to add the additional annotation and verify it will be injected after recreated:
 ```
-[root@mstnode kube-mutating-webhook-tutorial]# kubectl patch deployment sleep -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar-injector-webhook.morven.me/inject": "true"}}}}}'
+[root@mstnode kube-mutating-webhook-tutorial]# kubectl patch deployment sleep -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar-injector-webhook.apigee-proxy.me/inject": "true"}}}}}'
 deployment "sleep" patched
 [root@mstnode kube-mutating-webhook-tutorial]# kubectl delete pod sleep-776b7bcdcd-4bz58
 pod "sleep-776b7bcdcd-4bz58" deleted

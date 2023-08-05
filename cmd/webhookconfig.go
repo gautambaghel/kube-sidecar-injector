@@ -40,7 +40,7 @@ func createOrUpdateMutatingWebhookConfiguration(caPEM *bytes.Buffer, webhookServ
 			Name: webhookConfigName,
 		},
 		Webhooks: []admissionregistrationv1.MutatingWebhook{{
-			Name:                    "sidecar-injector.morven.me",
+			Name:                    "sidecar-injector.apigee-proxy.me",
 			AdmissionReviewVersions: []string{"v1", "v1beta1"},
 			SideEffects:             &sideEffect,
 			ClientConfig: admissionregistrationv1.WebhookClientConfig{

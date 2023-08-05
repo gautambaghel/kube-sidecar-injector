@@ -26,19 +26,18 @@ admissionregistration.k8s.io/v1beta1
 1. Build and push docker image:
 
 ```bash
-make docker-build docker-push IMAGE=quay.io/<your_quayio_username>/sidecar-injector:latest
+make docker-build docker-push IMAGE=docker.io/baghelg/sidecar-injector:latest
 ```
 
 2. Deploy the kube-sidecar-injector to kubernetes cluster:
 
 ```bash
-make deploy IMAGE=quay.io/<your_quayio_username>/sidecar-injector:latest
+make deploy IMAGE=docker.io/baghelg/sidecar-injector:latest
 ```
 
 3. Verify the kube-sidecar-injector is up and running:
 
 ```bash
-# kubectl -n sidecar-injector get pod
 # kubectl -n sidecar-injector get pod
 NAME                                READY   STATUS    RESTARTS   AGE
 sidecar-injector-7c8bc5f4c9-28c84   1/1     Running   0          30s
@@ -63,10 +62,7 @@ sidecar-injector     Active   17m
 2. Deploy an app in Kubernetes cluster, take `alpine` app as an example
 
 ```bash
-kubectl -n test-ns run alpine \
-    --image=alpine \
-    --restart=Never \
-    --command -- sleep infinity
+kubectl --namespace test-ns run alpine --image=alpine:latest --restart=Never --command -- /bin/sh -c "sleep infinity"
 ```
 
 3. Verify sidecar container is injected:
@@ -85,4 +81,4 @@ Sometimes you may find that pod is injected with sidecar container as expected, 
 
 1. The sidecar-injector pod is in running state and no error logs.
 2. The namespace in which application pod is deployed has the correct labels(`sidecar-injector=enabled`) as configured in `mutatingwebhookconfiguration`.
-3. Check if the application pod has annotation `sidecar-injector-webhook.morven.me/inject:"yes"`.
+3. Check if the application pod has annotation `sidecar-injector-webhook.apigee-proxy.me/inject:"yes"`.
