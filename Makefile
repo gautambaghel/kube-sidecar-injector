@@ -69,6 +69,10 @@ docker-build: test ## Build docker image.
 docker-push: ## Push docker image.
 	docker push ${IMAGE}
 
+.PHONY: docker-buildx
+docker-buildx: test ## Build docker image.
+	docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v8 --push -t ${IMAGE} .
+
 ##@ Deployment
 
 deploy: kustomize
